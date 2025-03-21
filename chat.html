@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緣起緣滅 - 聊天</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5; 
+        }
+        h1 { 
+            font-size: 24px; 
+            margin-bottom: 20px; 
+        }
+        #chat { 
+            height: 400px; 
+            overflow-y: scroll; 
+            border: 1px solid #ccc; 
+            padding: 20px; 
+            background-color: #fff; 
+            border-radius: 8px; 
+        }
+        #message { 
+            width: 70%; 
+            height: 60px; 
+            padding: 8px; 
+            font-size: 16px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            margin-right: 10px; 
+            resize: none; 
+        }
+        button { 
+            padding: 8px 20px; 
+            font-size: 16px; 
+            background-color: #f44336; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        button:hover { 
+            background-color: #d32f2f; 
+        }
+        .message-container { 
+            margin: 15px 0; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .message { 
+            padding: 8px 12px; 
+            border-radius: 10px; 
+            word-wrap: break-word; 
+            display: inline-block; 
+            font-size: 16px; 
+        }
+        .self-container { 
+            align-items: flex-end; 
+        }
+        .other-container { 
+            align-items: flex-start; 
+        }
+        .self { 
+            background-color: #4682b4; 
+            color: #ffffff; 
+        }
+        .other { 
+            background-color: #ff7f50; 
+            color: #ffffff; 
+        }
+        .short { max-width: 20%; }
+        .medium { max-width: 40%; }
+        .long { max-width: 60%; }
+        .system { 
+            text-align: center; 
+            color: #888; 
+            font-size: 14px; 
+            margin: 10px 0; 
+        }
+        .typing { 
+            text-align: left; 
+            color: #888; 
+            font-size: 14px; 
+            margin: 5px 0; 
+            font-style: italic; 
+        }
+    </style>
+</head>
+<body>
+    <h1>緣起緣滅</h1>
+    <div id="chat"></div>
+    <div style="margin-top: 10px;">
+        <textarea id="message" placeholder="輸入訊息... (Alt + Enter 傳送，Enter 換行)"></textarea>
+        <button id="leaveButton" onclick="leaveChat()">離開</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // 檢查是否從第一頁進入
+        const targetGender = sessionStorage.getItem('targetGender');
+        const chatRoom = sessionStorage.getItem('chatRoom');
+        console.log('檢查 sessionStorage - targetGender:', targetGender, 'chatRoom:', chatRoom);
+        if (!targetGender || !chatRoom) {
+            console.log('未找到 targetGender 或 chatRoom，跳轉回 index.html');
+            alert('請先選擇聊天對象性別！');
+            window.location.href = '/index.html';
+        } else {
+            const socket = io(window.location.origin); // 改為動態連線地址
+            const chat = document.getElementById('chat');
+            const messageInput = document.getElementById('message');
+            let typingMessage = null;
+
+            socket.on('connect', () => {
+                console.log('Socket.IO 連線成功，socket.id:', socket.id);
+                socket.emit('joinRoom', chatRoom);
+                appendSystemMessage('已連接到伺服器！');
+                appendSystemMessage('已找到對象，開始聊天吧！');
+            });
+
+            socket.on('message', (data) => {
+                console.log('收到訊息:', data);
+                const messageContainer = document.createElement('div');
+                messageContainer.classList.add('message-container');
+
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+
+                if (data.user === socket.id) {
+                    messageContainer.classList.add('self-container');
+                    messageDiv.classList.add('self');
+                } else {
+                    messageContainer.classList.add('other-container');
+                    messageDiv.classList.add('other');
+                }
+
+                const textLength = data.text.length;
+                if (textLength <= 10) {
+                    messageDiv.classList.add('short');
+                } else if (textLength <= 30) {
+                    messageDiv.classList.add('medium');
+                } else {
+                    messageDiv.classList.add('long');
+                }
+
+                messageDiv.textContent = data.text;
+                messageContainer.appendChild(messageDiv);
+                chat.appendChild(messageContainer);
+                chat.scrollTop = chat.scrollHeight;
+
+                if (typingMessage) {
+                    chat.removeChild(typingMessage);
+                    typingMessage = null;
+                }
+            });
+
+            socket.on('partnerLeft', (msg) => {
+                console.log('收到 partnerLeft 事件:', msg);
+                appendSystemMessage(msg);
+                chat.innerHTML = '';
+                sessionStorage.removeItem('targetGender');
+                sessionStorage.removeItem('chatRoom');
+                window.location.href = '/index.html';
+            });
+
+            socket.on('error', (msg) => {
+                console.log('收到 error 事件:', msg);
+                alert(msg);
+                window.location.href = '/index.html';
+            });
+
+            socket.on('typing', () => {
+                console.log('對方正在輸入...');
+                if (!typingMessage) {
+                    typingMessage = document.createElement('div');
+                    typingMessage.classList.add('typing');
+                    typingMessage.textContent = '對方正在輸入...';
+                    chat.appendChild(typingMessage);
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            });
+
+            socket.on('stopTyping', () => {
+                console.log('對方停止輸入');
+                if (typingMessage) {
+                    chat.removeChild(typingMessage);
+                    typingMessage = null;
+                }
+            });
+
+            let typingTimeout;
+            messageInput.addEventListener('input', () => {
+                socket.emit('typing');
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    socket.emit('stopTyping');
+                }, 2000);
+            });
+
+            messageInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' && event.altKey) {
+                    event.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            function sendMessage() {
+                const msg = messageInput.value.trim();
+                if (msg) {
+                    console.log('發送訊息:', msg);
+                    socket.emit('message', msg);
+                    messageInput.value = '';
+                    socket.emit('stopTyping');
+                }
+            }
+
+            function leaveChat() {
+                console.log('點擊離開按鈕');
+                socket.emit('leaveChat');
+                sessionStorage.removeItem('targetGender');
+                sessionStorage.removeItem('chatRoom');
+                window.location.href = '/index.html';
+            }
+
+            function appendSystemMessage(msg) {
+                const systemDiv = document.createElement('div');
+                systemDiv.classList.add('system');
+                systemDiv.textContent = msg;
+                chat.appendChild(systemDiv);
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>
