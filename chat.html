@@ -98,7 +98,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // 檢查是否從第一頁進入
         const targetGender = sessionStorage.getItem('targetGender');
         const chatRoom = sessionStorage.getItem('chatRoom');
         console.log('檢查 sessionStorage - targetGender:', targetGender, 'chatRoom:', chatRoom);
@@ -107,7 +106,7 @@
             alert('請先選擇聊天對象性別！');
             window.location.href = '/index.html';
         } else {
-            const socket = io(window.location.origin); // 改為動態連線地址
+            const socket = io(window.location.origin);
             const chat = document.getElementById('chat');
             const messageInput = document.getElementById('message');
             let typingMessage = null;

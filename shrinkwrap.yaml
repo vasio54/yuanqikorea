@@ -663,5 +663,5 @@ registry: 'https://registry.npmjs.org/'
 shrinkwrapMinorVersion: 9
 shrinkwrapVersion: 3
 specifiers:
-  express: ^4.21.2
-  socket.io: ^4.8.1
+  express: ^4.18.2
+  socket.io: ^4.7.5

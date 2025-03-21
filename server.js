@@ -8,6 +8,15 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
+// 設置 CSP 頭部，允許 eval() 和 WebSocket
+app.use((req, res, next) => {
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self' ws: wss:"
+    );
+    next();
+});
+
 let waitingMales = [];
 let waitingFemales = [];
 let roomCounter = 0;
