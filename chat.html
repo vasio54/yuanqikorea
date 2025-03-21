@@ -8,9 +8,9 @@
         body { 
             font-family: 'Arial', sans-serif; 
             margin: 0; 
-            background-color: #E6E6FA; /* 淡紫色背景 */
-            height: 100vh; /* 確保佔滿視窗高度 */
-            overflow: hidden; /* 防止整體滾動 */
+            background-color: #E6E6FA; 
+            height: 100vh; 
+            overflow: hidden; 
             display: flex;
             flex-direction: column;
         }
@@ -20,48 +20,48 @@
             color: #333; 
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); 
             text-align: center; 
-            flex-shrink: 0; /* 防止被壓縮 */
+            flex-shrink: 0; 
         }
         #chat { 
-            flex: 1; /* 自動填充剩餘空間 */
-            overflow-y: auto; /* 允許滾動 */
+            flex: 1; 
+            overflow-y: auto; 
             border: 1px solid #ccc; 
             padding: 20px; 
-            padding-bottom: 100px; /* 預留輸入框高度 */
-            background-color: #E6E6FA; /* 淡紫色背景 */
+            padding-bottom: 100px; 
+            background-color: #E6E6FA; 
             border-radius: 8px; 
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
             margin: 0 20px 10px 20px; 
             box-sizing: border-box; 
-            display: flex; /* 使用 flex 布局 */
-            flex-direction: column; /* 垂直排列 */
-            justify-content: flex-end; /* 新訊息從底部開始 */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-end; 
         }
         #message { 
-            width: 100%; /* 佔滿可用空間 */
-            height: 60px; /* 增加高度以顯示更多文字 */
-            padding: 5px 10px; /* 調整內邊距 */
+            width: 100%; 
+            height: 60px; 
+            padding: 5px 10px; 
             font-size: 16px; 
-            line-height: 20px; /* 調整行高以顯示更多文字 */
+            line-height: 20px; 
             border: 1px solid #ccc; 
             border-radius: 5px; 
-            margin: 0 5px; /* 左右間距 */
+            margin: 0 5px; 
             resize: none; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-            box-sizing: border-box; /* 確保 padding 不影響高度 */
-            background-color: #E6E6FA; /* 淡紫色背景 */
-            text-align: right; /* 文字靠右對齊 */
+            box-sizing: border-box; 
+            background-color: #E6E6FA; 
+            text-align: right; 
         }
         button { 
-            width: 80px; /* 固定寬度 */
-            height: 60px; /* 與輸入框高度對齊 */
+            width: 80px; 
+            height: 60px; 
             font-size: 16px; 
             border: none; 
             border-radius: 5px; 
             cursor: pointer; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
             transition: background-color 0.3s, transform 0.1s; 
-            box-sizing: border-box; /* 確保 padding 不影響高度 */
+            box-sizing: border-box; 
         }
         #sendButton { 
             background-color: #4CAF50; 
@@ -133,14 +133,14 @@
             color: #888; 
             font-size: 14px; 
             margin: 10px; 
-            flex-shrink: 0; /* 防止被壓縮 */
+            flex-shrink: 0; 
         }
         .input-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 10px 5px; /* 減少左右內邊距 */
-            background-color: #E6E6FA; /* 淡紫色背景 */
+            padding: 10px 5px; 
+            background-color: #E6E6FA; 
             border-top: 1px solid #ccc;
             position: fixed;
             bottom: 0;
@@ -157,18 +157,17 @@
             border-radius: 5px;
             font-size: 14px;
             color: #555;
-            flex-shrink: 0; /* 防止被壓縮 */
+            flex-shrink: 0; 
         }
-        /* 手機端樣式調整 */
         @media (max-width: 600px) {
             #chat {
-                padding-bottom: 120px; /* 增加 padding-bottom，預留輸入框高度 */
+                padding-bottom: 120px; 
             }
             #message {
-                margin: 0 5px; /* 手機端調整間距 */
+                margin: 0 5px; 
             }
             button {
-                width: 60px; /* 手機端按鈕更窄 */
+                width: 60px; 
                 padding: 8px 0;
                 font-size: 14px;
             }
@@ -205,25 +204,21 @@
             window.location.href = '/index.html';
         } else {
             const socket = io(window.location.origin, {
-                reconnection: true, // 啟用自動重新連線
-                reconnectionAttempts: Infinity, // 無限次重新連線嘗試
-                reconnectionDelay: 1000, // 每次重新連線間隔 1 秒
-                reconnectionDelayMax: 5000 // 最大重新連線間隔 5 秒
+                reconnection: true,
+                reconnectionAttempts: Infinity,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000
             });
             const chat = document.getElementById('chat');
             const messageInput = document.getElementById('message');
             const altEnterModeCheckbox = document.getElementById('altEnterMode');
             let typingMessage = null;
 
-            // 檢測設備類型
             const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-            // 從 localStorage 載入用戶偏好
             const savedAltEnterMode = localStorage.getItem('altEnterMode') === 'true';
             altEnterModeCheckbox.checked = savedAltEnterMode;
             updateInputMode();
 
-            // 根據設備類型和模式設置提示訊息
             function updateInputMode() {
                 if (isMobile) {
                     messageInput.placeholder = '直接按輸入傳送';
@@ -232,23 +227,19 @@
                 }
             }
 
-            // 切換輸入模式
             function toggleAltEnterMode() {
                 localStorage.setItem('altEnterMode', altEnterModeCheckbox.checked);
                 updateInputMode();
             }
 
-            // 連線成功時，重新加入聊天室
             socket.on('connect', () => {
                 console.log('Socket.IO 連線成功，socket.id:', socket.id);
-                // 重新加入原來的聊天室
                 if (chatRoom) {
                     socket.emit('joinRoom', chatRoom);
                     appendSystemMessage('已連接到伺服器！');
                 }
             });
 
-            // 重新連線成功時，重新加入聊天室
             socket.on('reconnect', (attemptNumber) => {
                 console.log('重新連線成功，嘗試次數:', attemptNumber);
                 if (chatRoom) {
@@ -257,7 +248,6 @@
                 }
             });
 
-            // 連線失敗時，顯示提示
             socket.on('reconnect_failed', () => {
                 console.log('重新連線失敗');
                 appendSystemMessage('無法連接到伺服器，請檢查網路！');
@@ -267,7 +257,6 @@
                 console.log('收到訊息:', data);
                 const messageContainer = document.createElement('div');
                 messageContainer.classList.add('message-container');
-
                 const messageDiv = document.createElement('div');
                 messageDiv.classList.add('message');
 
@@ -280,18 +269,14 @@
                 }
 
                 const textLength = data.text.length;
-                if (textLength <= 10) {
-                    messageDiv.classList.add('short');
-                } else if (textLength <= 30) {
-                    messageDiv.classList.add('medium');
-                } else {
-                    messageDiv.classList.add('long');
-                }
+                if (textLength <= 10) messageDiv.classList.add('short');
+                else if (textLength <= 30) messageDiv.classList.add('medium');
+                else messageDiv.classList.add('long');
 
                 messageDiv.textContent = data.text;
                 messageContainer.appendChild(messageDiv);
                 chat.appendChild(messageContainer);
-                chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息（底部）
+                chat.scrollTop = chat.scrollHeight;
             });
 
             socket.on('partnerLeft', (msg) => {
@@ -338,25 +323,18 @@
             });
 
             messageInput.addEventListener('keydown', (event) => {
-                // 檢測是否為手機設備
-                const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
                 if (isMobile) {
-                    // 手機端：單獨按 Enter 鍵傳送訊息
                     if (event.key === 'Enter' && !event.altKey) {
                         event.preventDefault();
                         sendMessage();
                     }
                 } else {
-                    // 電腦端：根據模式選擇行為
                     if (altEnterModeCheckbox.checked) {
-                        // 模式 1：Alt + Enter 傳送，Enter 換行
                         if (event.key === 'Enter' && event.altKey) {
                             event.preventDefault();
                             sendMessage();
                         }
                     } else {
-                        // 模式 2：Enter 傳送
                         if (event.key === 'Enter' && !event.altKey) {
                             event.preventDefault();
                             sendMessage();
@@ -372,7 +350,7 @@
                     socket.emit('message', msg);
                     messageInput.value = '';
                     socket.emit('stopTyping');
-                    chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息（底部）
+                    chat.scrollTop = chat.scrollHeight;
                 }
             }
 
@@ -389,7 +367,7 @@
                 systemDiv.classList.add('system');
                 systemDiv.textContent = msg;
                 chat.appendChild(systemDiv);
-                chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息（底部）
+                chat.scrollTop = chat.scrollHeight;
             }
         }
     </script>
