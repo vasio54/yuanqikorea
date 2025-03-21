@@ -255,19 +255,6 @@
                 appendSystemMessage('無法連接到伺服器，請檢查網路！');
             });
 
-            socket.on('matchSuccess', (data) => {
-                console.log('配對成功，房間:', data.room);
-                sessionStorage.setItem('chatRoom', data.room);
-                chat.innerHTML = ''; // 清空聊天記錄
-                appendSystemMessage('已找到新對象，開始聊天吧！');
-            });
-
-            socket.on('waiting', (msg) => {
-                console.log('等待配對:', msg);
-                chat.innerHTML = '';
-                appendSystemMessage(msg);
-            });
-
             socket.on('message', (data) => {
                 console.log('收到訊息:', data);
                 const messageContainer = document.createElement('div');
@@ -297,10 +284,9 @@
             socket.on('partnerLeft', (msg) => {
                 console.log('收到 partnerLeft 事件:', msg);
                 appendSystemMessage(msg);
-                chat.innerHTML = '';
+                sessionStorage.removeItem('targetGender');
                 sessionStorage.removeItem('chatRoom');
-                // 自動重新配對
-                socket.emit('startMatching', { targetGender });
+                window.location.href = '/index.html'; // 直接跳轉回 index.html
             });
 
             socket.on('error', (msg) => {

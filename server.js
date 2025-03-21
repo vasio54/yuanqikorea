@@ -93,14 +93,12 @@ io.on('connection', (socket) => {
       if (clients) {
         clients.forEach((clientId) => {
           if (clientId !== socket.id) {
-            // 通知對方並重新配對
-            io.to(clientId).emit('partnerLeft', '對方已離開聊天，正在為您重新配對...');
+            // 通知對方跳轉回 index.html
+            io.to(clientId).emit('partnerLeft', '對方已離開聊天');
             const partnerSocket = io.sockets.sockets.get(clientId);
             if (partnerSocket) {
               partnerSocket.leave(room);
-              const targetGender = waitingUsers.male.includes(partnerSocket) ? 'male' : 'female';
-              partnerSocket.emit('startMatching', { targetGender }); // 觸發重新配對
-              console.log(`${clientId} 被踢出房間 ${room}，開始重新配對，目標性別: ${targetGender}`);
+              console.log(`${clientId} 被踢出房間 ${room}`);
             }
           }
         });
