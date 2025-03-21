@@ -3,13 +3,15 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http, {
   cors: { origin: '*' },
-  pingTimeout: 60000, // 增加超時時間，避免快速斷線
+  pingTimeout: 60000,
   pingInterval: 25000
 });
 
 app.use(express.static(__dirname));
 
 const waitingUsers = { male: [], female: [] };
+// 儲存每個房間的訊息緩衝區
+const roomMessages = {};
 
 io.on('connection', (socket) => {
   console.log('用戶已連線:', socket.id);
@@ -38,6 +40,7 @@ io.on('connection', (socket) => {
       io.to(socket.id).emit('matchSuccess', { room });
       io.to(partner.id).emit('matchSuccess', { room });
       console.log(`配對成功: ${socket.id} (目標: ${targetGender}) 和 ${partner.id} (目標: ${oppositeTargetGender})，房間: ${room}`);
+      roomMessages[room] = []; // 初始化房間訊息緩衝區
     } else {
       waitingUsers[targetGender].push(socket);
       socket.emit('waiting', '正在等待對方加入...');
@@ -48,15 +51,26 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (room) => {
     socket.join(room);
     console.log(`${socket.id} 加入房間: ${room}`);
-    // 檢查房間成員，確保雙方都在
     const clients = io.sockets.adapter.rooms.get(room);
     console.log(`房間 ${room} 當前成員: ${clients ? Array.from(clients) : '無成員'}`);
+
+    // 發送緩衝區中的訊息
+    if (roomMessages[room] && roomMessages[room].length > 0) {
+      roomMessages[room].forEach((msg) => {
+        socket.emit('message', msg);
+      });
+      console.log(`${socket.id} 收到緩衝訊息: ${roomMessages[room].length} 條`);
+    }
   });
 
   socket.on('message', (msg) => {
     const room = Array.from(socket.rooms)[1];
     if (room) {
-      io.to(room).emit('message', { user: socket.id, text: msg });
+      const messageData = { user: socket.id, text: msg };
+      io.to(room).emit('message', messageData);
+      // 緩衝訊息
+      if (!roomMessages[room]) roomMessages[room] = [];
+      roomMessages[room].push(messageData);
       console.log(`房間 ${room} 訊息: ${msg}`);
     }
   });
@@ -80,6 +94,7 @@ io.on('connection', (socket) => {
     if (room) {
       socket.to(room).emit('partnerLeft', '對方已離開聊天');
       socket.leave(room);
+      delete roomMessages[room]; // 清除房間訊息
     }
     console.log(`${socket.id} 離開聊天`);
   });
@@ -94,7 +109,6 @@ io.on('connection', (socket) => {
     }
     const room = Array.from(socket.rooms)[1];
     if (room) {
-      // 不立即觸發 partnerLeft，讓對方等待重新連線
       console.log(`${socket.id} 斷線，但保留房間 ${room} 狀態`);
     }
     console.log(`${socket.id} 已斷線`);

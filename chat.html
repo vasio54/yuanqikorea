@@ -113,7 +113,7 @@
             color: white; 
         }
         .short { max-width: 20%; }
- aggiornato: { max-width: 40%; }
+        .medium { max-width: 40%; }
         .long { max-width: 60%; }
         .system { 
             text-align: center; 
@@ -180,6 +180,7 @@
 <body>
     <h1>緣起</h1>
     <div class="tip">應用可能需要幾秒喚醒，請稍候...</div>
+    <div class="tip">請保持頁面活躍以接收訊息，離開畫面可能錯過訊息。</div>
     <div id="chat"></div>
     <div class="option-container">
         <label>
@@ -208,7 +209,7 @@
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: 1000,
                 reconnectionDelayMax: 5000,
-                transports: ['websocket', 'polling'] // 支援多種傳輸方式
+                transports: ['websocket', 'polling']
             });
             const chat = document.getElementById('chat');
             const messageInput = document.getElementById('message');
@@ -244,7 +245,7 @@
             socket.on('reconnect', (attemptNumber) => {
                 console.log('重新連線成功，嘗試次數:', attemptNumber);
                 if (chatRoom) {
-                    socket.emit('joinRoom', chatRoom); // 重新加入房間
+                    socket.emit('joinRoom', chatRoom);
                     appendSystemMessage('已重新連接到伺服器！');
                 }
             });
