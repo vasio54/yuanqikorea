@@ -121,6 +121,10 @@
             font-size: 14px; 
             margin: 10px 0; 
         }
+        .system.large { 
+            font-size: 18px; /* 加大字體 */
+            color: #666; /* 稍微加深顏色以提升可讀性 */
+        }
         .typing { 
             text-align: left; 
             color: #888; 
@@ -189,7 +193,7 @@
         </label>
     </div>
     <div class="input-container">
-        <button id="leaveButton" onclick="leaveChat()">離開</button>
+        <button id="leaveButton" onclick="confirmLeaveChat()">離開</button>
         <textarea id="message"></textarea>
         <button id="sendButton" onclick="sendMessage()">傳送</button>
     </div>
@@ -215,6 +219,7 @@
             const messageInput = document.getElementById('message');
             const altEnterModeCheckbox = document.getElementById('altEnterMode');
             let typingMessage = null;
+            let partnerHasLeft = false; // 追蹤對方是否已離開
 
             const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             const savedAltEnterMode = localStorage.getItem('altEnterMode') === 'true';
@@ -281,12 +286,10 @@
                 chat.scrollTop = chat.scrollHeight;
             });
 
-            socket.on('partnerLeft', (msg) => {
-                console.log('收到 partnerLeft 事件:', msg);
-                appendSystemMessage(msg);
-                sessionStorage.removeItem('targetGender');
-                sessionStorage.removeItem('chatRoom');
-                window.location.href = '/index.html'; // 直接跳轉回 index.html
+            socket.on('partnerLeft', () => {
+                console.log('收到 partnerLeft 事件');
+                partnerHasLeft = true; // 標記對方已離開
+                appendSystemMessage('對方已離開聊天。點擊這裡返回上一頁：<a href="/index.html">返回</a> 或按離開', true);
             });
 
             socket.on('error', (msg) => {
@@ -297,7 +300,7 @@
 
             socket.on('typing', () => {
                 console.log('對方正在輸入...');
-                if (!typingMessage) {
+                if (!typingMessage && !partnerHasLeft) { // 只有在對方未離開時顯示
                     typingMessage = document.createElement('div');
                     typingMessage.classList.add('typing');
                     typingMessage.textContent = '對方正在輸入...';
@@ -316,11 +319,13 @@
 
             let typingTimeout;
             messageInput.addEventListener('input', () => {
-                socket.emit('typing');
-                clearTimeout(typingTimeout);
-                typingTimeout = setTimeout(() => {
-                    socket.emit('stopTyping');
-                }, 2000);
+                if (!partnerHasLeft) { // 只有在對方未離開時發送
+                    socket.emit('typing');
+                    clearTimeout(typingTimeout);
+                    typingTimeout = setTimeout(() => {
+                        socket.emit('stopTyping');
+                    }, 2000);
+                }
             });
 
             messageInput.addEventListener('keydown', (event) => {
@@ -346,7 +351,7 @@
 
             function sendMessage() {
                 const msg = messageInput.value.trim();
-                if (msg) {
+                if (msg && !partnerHasLeft) { // 只有在對方未離開時發送
                     console.log('發送訊息:', msg);
                     socket.emit('message', msg);
                     messageInput.value = '';
@@ -355,21 +360,44 @@
                 }
             }
 
-            function leaveChat() {
+            function confirmLeaveChat() {
                 console.log('點擊離開按鈕');
-                socket.emit('leaveChat');
-                sessionStorage.removeItem('targetGender');
-                sessionStorage.removeItem('chatRoom');
-                window.location.href = '/index.html';
+                if (partnerHasLeft) {
+                    // 對方已離開，直接返回
+                    socket.emit('leaveChat');
+                    sessionStorage.removeItem('targetGender');
+                    sessionStorage.removeItem('chatRoom');
+                    window.location.href = '/index.html';
+                } else {
+                    // 對方未離開，顯示確認提示
+                    if (confirm('確定要離開聊天嗎？')) {
+                        socket.emit('leaveChat');
+                        sessionStorage.removeItem('targetGender');
+                        sessionStorage.removeItem('chatRoom');
+                        window.location.href = '/index.html';
+                    }
+                }
             }
 
-            function appendSystemMessage(msg) {
+            function appendSystemMessage(msg, largeFont = false) {
                 const systemDiv = document.createElement('div');
                 systemDiv.classList.add('system');
-                systemDiv.textContent = msg;
+                if (largeFont) {
+                    systemDiv.classList.add('large'); // 加大字體
+                }
+                systemDiv.innerHTML = msg; // 使用 innerHTML 以支援超連結
                 chat.appendChild(systemDiv);
                 chat.scrollTop = chat.scrollHeight;
             }
+
+            // 確保離開時通知對方（關閉頁面或刷新）
+            window.addEventListener('unload', () => {
+                if (!partnerHasLeft) { // 只有在對方未離開時通知
+                    socket.emit('leaveChat');
+                }
+                sessionStorage.removeItem('targetGender');
+                sessionStorage.removeItem('chatRoom');
+            });
         }
     </script>
 </body>
