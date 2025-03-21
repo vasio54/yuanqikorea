@@ -9,6 +9,9 @@
             font-family: 'Arial', sans-serif; 
             margin: 20px; 
             background-color: #E6E6FA; /* 淡紫色背景 */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* 確保佔滿視窗高度 */
         }
         h1 { 
             font-size: 28px; 
@@ -18,13 +21,14 @@
             text-align: center; 
         }
         #chat { 
-            height: 400px; 
-            overflow-y: scroll; 
+            flex: 1; /* 自動填充剩餘空間 */
+            overflow-y: auto; /* 改為 auto，避免不必要的滾動條 */
             border: 1px solid #ccc; 
             padding: 20px; 
             background-color: #fff; 
             border-radius: 8px; 
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+            margin-bottom: 10px; 
         }
         #message { 
             width: 60%; /* 手機端調整寬度 */
@@ -126,12 +130,19 @@
         }
         .option-container {
             text-align: center;
-            margin-top: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f9f9f9; /* 淺灰色背景 */
+            border: 1px solid #ddd; /* 邊框 */
+            border-radius: 5px;
             font-size: 14px;
             color: #555;
         }
         /* 手機端樣式調整 */
         @media (max-width: 600px) {
+            #chat {
+                height: 50vh; /* 預設高度，鍵盤彈出時會動態調整 */
+            }
             #message {
                 width: 50%; /* 手機端更窄 */
                 margin-right: 5px;
@@ -153,18 +164,18 @@
     <h1>緣起</h1>
     <div class="tip">應用可能需要幾秒喚醒，請稍候...</div>
     <div id="chat"></div>
+    <div class="option-container">
+        <label>
+            <input type="checkbox" id="altEnterMode" onchange="toggleAltEnterMode()">
+            使用 Alt + Enter 傳送，Enter 換行（僅限電腦端）
+        </label>
+    </div>
     <div class="input-container">
         <textarea id="message"></textarea>
         <button id="sendButton" onclick="sendMessage()">傳送</button>
     </div>
     <div style="text-align: center;">
         <button id="leaveButton" onclick="leaveChat()">離開</button>
-    </div>
-    <div class="option-container">
-        <label>
-            <input type="checkbox" id="altEnterMode" onchange="toggleAltEnterMode()">
-            使用 Alt + Enter 傳送，Enter 換行（僅限電腦端）
-        </label>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -206,6 +217,39 @@
                 updateInputMode();
             }
 
+            // 動態調整對話框高度
+            let originalChatHeight = chat.clientHeight;
+            let isKeyboardOpen = false;
+
+            messageInput.addEventListener('focus', () => {
+                if (isMobile) {
+                    isKeyboardOpen = true;
+                    // 鍵盤彈出時，調整對話框高度
+                    const windowHeight = window.innerHeight;
+                    const keyboardHeight = windowHeight * 0.4; // 假設鍵盤佔據 40% 高度
+                    const newChatHeight = windowHeight - keyboardHeight - 200; // 減去鍵盤高度和其他元素高度
+                    chat.style.height = `${Math.max(newChatHeight, 200)}px`; // 確保最小高度為 200px
+                    chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息
+                }
+            });
+
+            messageInput.addEventListener('blur', () => {
+                if (isMobile && isKeyboardOpen) {
+                    isKeyboardOpen = false;
+                    // 鍵盤收起時，恢復對話框高度
+                    chat.style.height = '50vh';
+                    chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息
+                }
+            });
+
+            // 視窗大小變化時調整
+            window.addEventListener('resize', () => {
+                if (isMobile && !isKeyboardOpen) {
+                    chat.style.height = '50vh';
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            });
+
             socket.on('connect', () => {
                 console.log('Socket.IO 連線成功，socket.id:', socket.id);
                 socket.emit('joinRoom', chatRoom);
@@ -241,12 +285,7 @@
                 messageDiv.textContent = data.text;
                 messageContainer.appendChild(messageDiv);
                 chat.appendChild(messageContainer);
-                chat.scrollTop = chat.scrollHeight;
-
-                if (typingMessage) {
-                    chat.removeChild(typingMessage);
-                    typingMessage = null;
-                }
+                chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息
             });
 
             socket.on('partnerLeft', (msg) => {
@@ -327,6 +366,7 @@
                     socket.emit('message', msg);
                     messageInput.value = '';
                     socket.emit('stopTyping');
+                    chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息
                 }
             }
 
@@ -343,7 +383,7 @@
                 systemDiv.classList.add('system');
                 systemDiv.textContent = msg;
                 chat.appendChild(systemDiv);
-                chat.scrollTop = chat.scrollHeight;
+                chat.scrollTop = chat.scrollHeight; // 滾動到最新訊息
             }
         }
     </script>
