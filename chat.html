@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緣起 - 聊天</title>
+    <title>台灣緣起 - 聊天</title>
     <style>
         body { 
             font-family: 'Arial', sans-serif; 
@@ -182,7 +182,7 @@
     </style>
 </head>
 <body>
-    <h1>緣起</h1>
+    <h1>台灣緣起</h1>
     <div class="tip">應用可能需要幾秒喚醒，請稍候...</div>
     <div class="tip">請保持頁面活躍以接收訊息，離開畫面可能錯過訊息。</div>
     <div id="chat"></div>
@@ -243,7 +243,7 @@
                 console.log('Socket.IO 連線成功，socket.id:', socket.id);
                 if (chatRoom) {
                     socket.emit('joinRoom', chatRoom);
-                    appendSystemMessage('已連接到伺服器！');
+                    appendSystemMessage('開始聊天吧');
                 }
             });
 
