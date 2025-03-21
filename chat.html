@@ -113,7 +113,7 @@
             color: white; 
         }
         .short { max-width: 20%; }
-        .medium { max-width: 40%; }
+ aggiornato: { max-width: 40%; }
         .long { max-width: 60%; }
         .system { 
             text-align: center; 
@@ -207,7 +207,8 @@
                 reconnection: true,
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: 1000,
-                reconnectionDelayMax: 5000
+                reconnectionDelayMax: 5000,
+                transports: ['websocket', 'polling'] // 支援多種傳輸方式
             });
             const chat = document.getElementById('chat');
             const messageInput = document.getElementById('message');
@@ -243,7 +244,7 @@
             socket.on('reconnect', (attemptNumber) => {
                 console.log('重新連線成功，嘗試次數:', attemptNumber);
                 if (chatRoom) {
-                    socket.emit('joinRoom', chatRoom);
+                    socket.emit('joinRoom', chatRoom); // 重新加入房間
                     appendSystemMessage('已重新連接到伺服器！');
                 }
             });
