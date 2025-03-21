@@ -204,7 +204,12 @@
             alert('請先選擇聊天對象性別！');
             window.location.href = '/index.html';
         } else {
-            const socket = io(window.location.origin);
+            const socket = io(window.location.origin, {
+                reconnection: true, // 啟用自動重新連線
+                reconnectionAttempts: Infinity, // 無限次重新連線嘗試
+                reconnectionDelay: 1000, // 每次重新連線間隔 1 秒
+                reconnectionDelayMax: 5000 // 最大重新連線間隔 5 秒
+            });
             const chat = document.getElementById('chat');
             const messageInput = document.getElementById('message');
             const altEnterModeCheckbox = document.getElementById('altEnterMode');
@@ -233,11 +238,29 @@
                 updateInputMode();
             }
 
+            // 連線成功時，重新加入聊天室
             socket.on('connect', () => {
                 console.log('Socket.IO 連線成功，socket.id:', socket.id);
-                socket.emit('joinRoom', chatRoom);
-                appendSystemMessage('已連接到伺服器！');
-                appendSystemMessage('已找到對象，開始聊天吧！');
+                // 重新加入原來的聊天室
+                if (chatRoom) {
+                    socket.emit('joinRoom', chatRoom);
+                    appendSystemMessage('已連接到伺服器！');
+                }
+            });
+
+            // 重新連線成功時，重新加入聊天室
+            socket.on('reconnect', (attemptNumber) => {
+                console.log('重新連線成功，嘗試次數:', attemptNumber);
+                if (chatRoom) {
+                    socket.emit('joinRoom', chatRoom);
+                    appendSystemMessage('已重新連接到伺服器！');
+                }
+            });
+
+            // 連線失敗時，顯示提示
+            socket.on('reconnect_failed', () => {
+                console.log('重新連線失敗');
+                appendSystemMessage('無法連接到伺服器，請檢查網路！');
             });
 
             socket.on('message', (data) => {
