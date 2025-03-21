@@ -10,7 +10,6 @@ const io = require('socket.io')(http, {
 app.use(express.static(__dirname));
 
 const waitingUsers = { male: [], female: [] };
-// 儲存每個房間的訊息緩衝區
 const roomMessages = {};
 
 io.on('connection', (socket) => {
@@ -40,7 +39,7 @@ io.on('connection', (socket) => {
       io.to(socket.id).emit('matchSuccess', { room });
       io.to(partner.id).emit('matchSuccess', { room });
       console.log(`配對成功: ${socket.id} (目標: ${targetGender}) 和 ${partner.id} (目標: ${oppositeTargetGender})，房間: ${room}`);
-      roomMessages[room] = []; // 初始化房間訊息緩衝區
+      roomMessages[room] = [];
     } else {
       waitingUsers[targetGender].push(socket);
       socket.emit('waiting', '正在等待對方加入...');
@@ -54,7 +53,6 @@ io.on('connection', (socket) => {
     const clients = io.sockets.adapter.rooms.get(room);
     console.log(`房間 ${room} 當前成員: ${clients ? Array.from(clients) : '無成員'}`);
 
-    // 發送緩衝區中的訊息
     if (roomMessages[room] && roomMessages[room].length > 0) {
       roomMessages[room].forEach((msg) => {
         socket.emit('message', msg);
@@ -68,7 +66,6 @@ io.on('connection', (socket) => {
     if (room) {
       const messageData = { user: socket.id, text: msg };
       io.to(room).emit('message', messageData);
-      // 緩衝訊息
       if (!roomMessages[room]) roomMessages[room] = [];
       roomMessages[room].push(messageData);
       console.log(`房間 ${room} 訊息: ${msg}`);
@@ -92,11 +89,26 @@ io.on('connection', (socket) => {
   socket.on('leaveChat', () => {
     const room = Array.from(socket.rooms)[1];
     if (room) {
-      socket.to(room).emit('partnerLeft', '對方已離開聊天');
+      const clients = io.sockets.adapter.rooms.get(room);
+      if (clients) {
+        clients.forEach((clientId) => {
+          if (clientId !== socket.id) {
+            // 通知對方並重新配對
+            io.to(clientId).emit('partnerLeft', '對方已離開聊天，正在為您重新配對...');
+            const partnerSocket = io.sockets.sockets.get(clientId);
+            if (partnerSocket) {
+              partnerSocket.leave(room);
+              const targetGender = waitingUsers.male.includes(partnerSocket) ? 'male' : 'female';
+              partnerSocket.emit('startMatching', { targetGender }); // 觸發重新配對
+              console.log(`${clientId} 被踢出房間 ${room}，開始重新配對，目標性別: ${targetGender}`);
+            }
+          }
+        });
+      }
       socket.leave(room);
-      delete roomMessages[room]; // 清除房間訊息
+      delete roomMessages[room];
+      console.log(`${socket.id} 離開聊天，房間 ${room} 已解散`);
     }
-    console.log(`${socket.id} 離開聊天`);
   });
 
   socket.on('disconnect', () => {
