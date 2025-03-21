@@ -89,6 +89,9 @@
         const socket = io(window.location.origin);
         const statusDiv = document.getElementById('status');
         const genderSelect = document.getElementById('gender');
+        const startButton = document.querySelector('button');
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0; // 檢測是否為手機
+        let isMatching = false; // 追蹤是否正在配對
 
         function startChat() {
             const targetGender = genderSelect.value;
@@ -99,7 +102,8 @@
             sessionStorage.setItem('targetGender', targetGender);
             socket.emit('startMatching', { targetGender });
             statusDiv.textContent = '正在配對中...';
-            document.querySelector('button').disabled = true;
+            startButton.disabled = true;
+            isMatching = true; // 開始配對
         }
 
         socket.on('waiting', (msg) => {
@@ -109,14 +113,32 @@
         socket.on('matchSuccess', (data) => {
             console.log('配對成功，房間:', data.room);
             sessionStorage.setItem('chatRoom', data.room);
+            isMatching = false; // 配對完成
             window.location.href = '/chat.html';
         });
 
         socket.on('error', (msg) => {
             alert(msg);
             statusDiv.textContent = '';
-            document.querySelector('button').disabled = false;
+            startButton.disabled = false;
+            isMatching = false; // 錯誤時停止配對
         });
+
+        // 手機端檢測頁面可見性
+        if (isMobile) {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && isMatching) {
+                    // 頁面不可見且正在配對，停止等待並返回首頁
+                    socket.emit('stopMatching'); // 通知後端停止配對
+                    statusDiv.textContent = '已取消配對';
+                    startButton.disabled = false;
+                    isMatching = false;
+                    setTimeout(() => {
+                        window.location.href = '/index.html'; // 延遲跳轉以顯示訊息
+                    }, 500);
+                }
+            });
+        }
     </script>
 </body>
 </html>
