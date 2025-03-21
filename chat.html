@@ -6,13 +6,16 @@
     <title>緣起緣滅 - 聊天</title>
     <style>
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Arial', sans-serif; 
             margin: 20px; 
-            background-color: #f5f5f5; 
+            background-color: #E6E6FA; /* 淡紫色背景 */
         }
         h1 { 
-            font-size: 24px; 
+            font-size: 28px; 
             margin-bottom: 20px; 
+            color: #333; 
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); 
+            text-align: center; 
         }
         #chat { 
             height: 400px; 
@@ -21,28 +24,49 @@
             padding: 20px; 
             background-color: #fff; 
             border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
         }
         #message { 
-            width: 70%; 
+            width: 60%; /* 手機端調整寬度 */
             height: 60px; 
-            padding: 8px; 
+            padding: 10px; 
             font-size: 16px; 
             border: 1px solid #ccc; 
-            border-radius: 4px; 
+            border-radius: 5px; 
             margin-right: 10px; 
             resize: none; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
         }
         button { 
-            padding: 8px 20px; 
+            padding: 10px 20px; 
             font-size: 16px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
+            transition: background-color 0.3s, transform 0.1s; 
+        }
+        #sendButton { 
+            background-color: #4CAF50; 
+            color: white; 
+        }
+        #sendButton:hover { 
+            background-color: #45a049; 
+            transform: scale(1.05); 
+        }
+        #sendButton:active { 
+            transform: scale(0.95); 
+        }
+        #leaveButton { 
             background-color: #f44336; 
             color: white; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
         }
-        button:hover { 
+        #leaveButton:hover { 
             background-color: #d32f2f; 
+            transform: scale(1.05); 
+        }
+        #leaveButton:active { 
+            transform: scale(0.95); 
         }
         .message-container { 
             margin: 15px 0; 
@@ -64,11 +88,11 @@
         }
         .self { 
             background-color: #4682b4; 
-            color: #ffffff; 
+            color: white; 
         }
         .other { 
             background-color: #ff7f50; 
-            color: #ffffff; 
+            color: white; 
         }
         .short { max-width: 20%; }
         .medium { max-width: 40%; }
@@ -86,13 +110,32 @@
             margin: 5px 0; 
             font-style: italic; 
         }
+        .tip { 
+            text-align: center; 
+            color: #888; 
+            font-size: 14px; 
+            margin: 10px; 
+        }
+        /* 手機端樣式調整 */
+        @media (max-width: 600px) {
+            #message {
+                width: 50%; /* 手機端更窄 */
+                margin-right: 5px;
+            }
+            button {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>緣起</h1>
+    <h1>緣起緣滅</h1>
+    <div class="tip">應用可能需要幾秒喚醒，請稍候...</div>
     <div id="chat"></div>
-    <div style="margin-top: 10px;">
-        <textarea id="message" placeholder="輸入訊息... (Alt + Enter 傳送，Enter 換行)"></textarea>
+    <div style="margin-top: 10px; text-align: center;">
+        <textarea id="message" placeholder="輸入訊息... (手機端直接按 Enter 傳送)"></textarea>
+        <button id="sendButton" onclick="sendMessage()">傳送</button>
         <button id="leaveButton" onclick="leaveChat()">離開</button>
     </div>
 
@@ -198,9 +241,21 @@
             });
 
             messageInput.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' && event.altKey) {
-                    event.preventDefault();
-                    sendMessage();
+                // 檢測是否為手機設備（簡單判斷：檢查觸控支援）
+                const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                
+                if (isMobile) {
+                    // 手機端：單獨按 Enter 鍵傳送訊息
+                    if (event.key === 'Enter' && !event.altKey) {
+                        event.preventDefault();
+                        sendMessage();
+                    }
+                } else {
+                    // 桌面端：Alt + Enter 傳送，單獨 Enter 換行
+                    if (event.key === 'Enter' && event.altKey) {
+                        event.preventDefault();
+                        sendMessage();
+                    }
                 }
             });
 
