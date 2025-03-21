@@ -11,6 +11,8 @@
             background-color: #E6E6FA; /* 淡紫色背景 */
             height: 100vh; /* 確保佔滿視窗高度 */
             overflow: hidden; /* 防止整體滾動 */
+            display: flex;
+            flex-direction: column;
         }
         h1 { 
             font-size: 28px; 
@@ -18,13 +20,15 @@
             color: #333; 
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); 
             text-align: center; 
+            flex-shrink: 0; /* 防止被壓縮 */
         }
         #chat { 
-            height: calc(100vh - 220px); /* 預留其他元素高度 */
+            flex: 1; /* 自動填充剩餘空間 */
             overflow-y: auto; /* 允許滾動 */
             border: 1px solid #ccc; 
             padding: 20px; 
-            background-color: #fff; 
+            padding-bottom: 80px; /* 預留輸入框高度 */
+            background-color: #E6E6FA; /* 淡紫色背景 */
             border-radius: 8px; 
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
             margin: 0 20px 10px 20px; 
@@ -34,24 +38,28 @@
             justify-content: flex-end; /* 新訊息從底部開始 */
         }
         #message { 
-            width: 60%; 
-            height: 60px; 
+            width: 100%; /* 佔滿可用空間 */
+            height: 40px; /* 與按鈕高度對齊 */
             padding: 10px; 
             font-size: 16px; 
             border: 1px solid #ccc; 
             border-radius: 5px; 
-            margin-right: 10px; 
+            margin: 0 5px; /* 左右間距 */
             resize: none; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+            box-sizing: border-box; /* 確保 padding 不影響高度 */
+            background-color: #E6E6FA; /* 淡紫色背景 */
         }
         button { 
-            padding: 10px 20px; 
+            width: 80px; /* 固定寬度 */
+            height: 40px; /* 固定高度，與輸入框對齊 */
             font-size: 16px; 
             border: none; 
             border-radius: 5px; 
             cursor: pointer; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
             transition: background-color 0.3s, transform 0.1s; 
+            box-sizing: border-box; /* 確保 padding 不影響高度 */
         }
         #sendButton { 
             background-color: #4CAF50; 
@@ -68,7 +76,6 @@
             background-color: #f44336; 
             color: white; 
             border: 2px solid #d32f2f; 
-            margin: 10px 0; 
         }
         #leaveButton:hover { 
             background-color: #d32f2f; 
@@ -124,28 +131,19 @@
             color: #888; 
             font-size: 14px; 
             margin: 10px; 
+            flex-shrink: 0; /* 防止被壓縮 */
         }
         .input-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 10px 20px;
-            background-color: #fff; 
+            padding: 10px 5px; /* 減少左右內邊距 */
+            background-color: #E6E6FA; /* 淡紫色背景 */
             border-top: 1px solid #ccc;
-            position: fixed;
-            bottom: 60px; /* 預留離開按鈕空間 */
-            left: 0;
-            right: 0;
-            z-index: 10; 
-        }
-        .leave-container {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            text-align: center;
-            padding: 10px 20px;
-            background-color: #E6E6FA; /* 與背景色一致 */
             z-index: 10; 
         }
         .option-container {
@@ -157,18 +155,19 @@
             border-radius: 5px;
             font-size: 14px;
             color: #555;
+            flex-shrink: 0; /* 防止被壓縮 */
         }
         /* 手機端樣式調整 */
         @media (max-width: 600px) {
             #chat {
-                height: calc(100vh - 240px); /* 預留其他元素高度 */
+                padding-bottom: 100px; /* 增加 padding-bottom，預留輸入框高度 */
             }
             #message {
-                width: 50%; /* 手機端更窄 */
-                margin-right: 5px;
+                margin: 0 5px; /* 手機端調整間距 */
             }
             button {
-                padding: 8px 15px;
+                width: 60px; /* 手機端按鈕更窄 */
+                padding: 8px 0;
                 font-size: 14px;
             }
             .option-container {
@@ -188,11 +187,9 @@
         </label>
     </div>
     <div class="input-container">
+        <button id="leaveButton" onclick="leaveChat()">離開</button>
         <textarea id="message"></textarea>
         <button id="sendButton" onclick="sendMessage()">傳送</button>
-    </div>
-    <div class="leave-container">
-        <button id="leaveButton" onclick="leaveChat()">離開</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
