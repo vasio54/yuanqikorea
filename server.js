@@ -3,119 +3,104 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-app.use(express.static('public'));
+// 提供靜態檔案（index.html 和 chat.html）
+app.use(express.static(__dirname));
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
-});
-
-app.get('/chat.html', (req, res) => {
-    res.sendFile(__dirname + '/public/chat.html');
-});
-
+// 儲存等待配對的用戶
 const waitingUsers = { male: [], female: [] };
-const rooms = new Map();
 
 io.on('connection', (socket) => {
-    console.log('用戶已連線，socket.id:', socket.id);
+  console.log('用戶已連線:', socket.id);
 
-    socket.on('startMatching', (data) => {
-        const { targetGender } = data;
-        if (!['male', 'female'].includes(targetGender)) {
-            socket.emit('error', '無效的性別選擇！');
-            return;
-        }
+  // 處理配對請求
+  socket.on('startMatching', (data) => {
+    const { targetGender } = data;
+    console.log(`${socket.id} 請求配對，目標性別: ${targetGender}`);
 
-        const oppositeGender = targetGender === 'male' ? 'female' : 'male';
-        if (waitingUsers[oppositeGender].length > 0) {
-            const partnerSocketId = waitingUsers[oppositeGender].shift();
-            const roomId = `room-${socket.id}-${partnerSocketId}`;
-            socket.join(roomId);
-            io.to(partnerSocketId).emit('matchSuccess', { room: roomId });
-            socket.emit('matchSuccess', { room: roomId });
-            rooms.set(roomId, { users: [socket.id, partnerSocketId], active: true });
-            console.log(`配對成功，房間 ${roomId}: ${socket.id} 和 ${partnerSocketId}`);
-        } else {
-            waitingUsers[targetGender].push(socket.id);
-            socket.emit('waiting', '正在尋找聊天對象，請稍候...');
-            console.log(`用戶 ${socket.id} 正在等待，目標性別: ${targetGender}`);
-        }
-    });
+    // 假設用戶自己的性別與目標性別相反（這裡簡化處理）
+    const userGender = targetGender === 'male' ? 'female' : 'male';
+    socket.gender = userGender; // 記錄用戶性別
+    socket.targetGender = targetGender;
 
-    socket.on('joinRoom', (roomId) => {
-        socket.join(roomId);
-        console.log(`用戶 ${socket.id} 加入房間 ${roomId}`);
-    });
+    // 檢查是否有等待中的對象
+    const waitingList = waitingUsers[targetGender];
+    if (waitingList.length > 0) {
+      const partner = waitingList.shift(); // 取出第一個等待者
+      const room = `room-${socket.id}-${partner.id}`;
+      
+      // 通知雙方配對成功
+      socket.join(room);
+      partner.join(room);
+      io.to(socket.id).emit('matchSuccess', { room });
+      io.to(partner.id).emit('matchSuccess', { room });
+      console.log(`配對成功: ${socket.id} 和 ${partner.id}，房間: ${room}`);
+    } else {
+      // 沒有等待者，將用戶加入等待列表
+      waitingUsers[userGender].push(socket);
+      socket.emit('waiting', '正在等待對方加入...');
+      console.log(`${socket.id} 已加入等待列表，性別: ${userGender}`);
+    }
+  });
 
-    socket.on('message', (msg) => {
-        const roomsArray = Array.from(socket.rooms);
-        const roomId = roomsArray.find(room => room !== socket.id);
-        if (roomId) {
-            io.to(roomId).emit('message', { user: socket.id, text: msg });
-            console.log(`房間 ${roomId} 訊息: ${msg} (來自 ${socket.id})`);
-        }
-    });
+  // 加入聊天室
+  socket.on('joinRoom', (room) => {
+    socket.join(room);
+    console.log(`${socket.id} 加入房間: ${room}`);
+  });
 
-    socket.on('typing', () => {
-        const roomsArray = Array.from(socket.rooms);
-        const roomId = roomsArray.find(room => room !== socket.id);
-        if (roomId) {
-            socket.to(roomId).emit('typing');
-        }
-    });
+  // 處理訊息
+  socket.on('message', (msg) => {
+    const room = Array.from(socket.rooms)[1]; // 獲取用戶所在的房間
+    if (room) {
+      io.to(room).emit('message', { user: socket.id, text: msg });
+      console.log(`房間 ${room} 訊息: ${msg}`);
+    }
+  });
 
-    socket.on('stopTyping', () => {
-        const roomsArray = Array.from(socket.rooms);
-        const roomId = roomsArray.find(room => room !== socket.id);
-        if (roomId) {
-            socket.to(roomId).emit('stopTyping');
-        }
-    });
+  // 處理輸入中
+  socket.on('typing', () => {
+    const room = Array.from(socket.rooms)[1];
+    if (room) {
+      socket.to(room).emit('typing');
+    }
+  });
 
-    socket.on('leaveChat', () => {
-        const roomsArray = Array.from(socket.rooms);
-        const roomId = roomsArray.find(room => room !== socket.id);
-        if (roomId) {
-            socket.to(roomId).emit('partnerLeft', '對方已離開聊天！');
-            rooms.delete(roomId);
-            console.log(`用戶 ${socket.id} 主動離開房間 ${roomId}`);
-        }
-        socket.disconnect();
-    });
+  socket.on('stopTyping', () => {
+    const room = Array.from(socket.rooms)[1];
+    if (room) {
+      socket.to(room).emit('stopTyping');
+    }
+  });
 
-    socket.on('disconnect', () => {
-        console.log(`用戶 ${socket.id} 斷線`);
-        const roomsArray = Array.from(socket.rooms);
-        const roomId = roomsArray.find(room => room !== socket.id);
-        if (roomId) {
-            const room = rooms.get(roomId);
-            if (room) {
-                // 設置延遲，給予用戶重新連線的機會
-                setTimeout(() => {
-                    // 檢查用戶是否重新連線
-                    if (!io.sockets.sockets.get(socket.id)) {
-                        // 用戶未重新連線，通知另一方並清除房間
-                        socket.to(roomId).emit('partnerLeft', '對方已離開聊天！');
-                        rooms.delete(roomId);
-                        console.log(`用戶 ${socket.id} 斷線超過 30 秒，房間 ${roomId} 已清除`);
-                    } else {
-                        console.log(`用戶 ${socket.id} 已重新連線，房間 ${roomId} 保持活躍`);
-                    }
-                }, 30000); // 延遲 30 秒
-            }
-        }
+  // 處理離開聊天
+  socket.on('leaveChat', () => {
+    const room = Array.from(socket.rooms)[1];
+    if (room) {
+      socket.to(room).emit('partnerLeft', '對方已離開聊天');
+      socket.leave(room);
+    }
+    sessionStorage.removeItem('targetGender');
+    sessionStorage.removeItem('chatRoom');
+    console.log(`${socket.id} 離開聊天`);
+  });
 
-        // 從等待列表中移除
-        for (const gender in waitingUsers) {
-            const index = waitingUsers[gender].indexOf(socket.id);
-            if (index !== -1) {
-                waitingUsers[gender].splice(index, 1);
-                console.log(`用戶 ${socket.id} 從等待列表 (${gender}) 中移除`);
-            }
-        }
-    });
+  // 用戶斷線處理
+  socket.on('disconnect', () => {
+    const userGender = socket.gender || 'unknown';
+    const index = waitingUsers[userGender].indexOf(socket);
+    if (index !== -1) {
+      waitingUsers[userGender].splice(index, 1);
+      console.log(`${socket.id} 從等待列表移除`);
+    }
+    const room = Array.from(socket.rooms)[1];
+    if (room) {
+      socket.to(room).emit('partnerLeft', '對方已離開聊天');
+    }
+    console.log(`${socket.id} 已斷線`);
+  });
 });
 
-http.listen(3000, () => {
-    console.log('伺服器運行於 http://localhost:3000');
+// 啟動伺服器
+http.listen(process.env.PORT || 3000, () => {
+  console.log('伺服器運行於端口', process.env.PORT || 3000);
 });
