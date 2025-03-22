@@ -241,7 +241,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         const targetGender = sessionStorage.getItem('targetGender');
         const chatRoom = sessionStorage.getItem('chatRoom');
@@ -252,12 +252,11 @@
             window.location.href = '/index.html';
         } else {
             const socket = io({
-                path: '/socket.io', // 與後端路徑一致
+                path: '/socket.io',
                 reconnection: true,
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: 1000,
-                reconnectionDelayMax: 5000,
-                transports: ['websocket', 'polling']
+                reconnectionDelayMax: 5000
             });
             const chat = document.getElementById('chat');
             const messageInput = document.getElementById('message');

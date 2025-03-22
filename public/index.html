@@ -131,15 +131,14 @@
         <a href="mailto:vasio54@gmail.com">관리자에게 연락</a>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io({
-            path: '/socket.io', // 與後端路徑一致
+            path: '/socket.io',
             reconnection: true,
             reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            transports: ['websocket', 'polling']
+            reconnectionDelayMax: 5000
         });
         const statusDiv = document.getElementById('status');
         const genderSelect = document.getElementById('gender');

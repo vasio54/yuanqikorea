@@ -8,7 +8,7 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] },
   pingTimeout: 60000,
   pingInterval: 25000,
-  path: "/socket.io" // 明確指定 Socket.IO 路徑
+  path: "/socket.io"
 });
 
 // 靜態檔案服務
@@ -129,5 +129,8 @@ io.on("connection", (socket) => {
   });
 });
 
-// Vercel 無伺服器函數適配
-module.exports = app;
+// 在 Render 上使用 server.listen
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
