@@ -23,10 +23,11 @@
             flex-shrink: 0; 
         }
         #chat { 
-            max-width: 700px; /* 設定最大寬度 */
+            max-width: 500px; /* 設定最大寬度 */
             width: 100%; /* 確保在小螢幕上仍能適應 */
             margin: 0 auto 10px auto; /* 上下間距保持原樣，左右自動居中 */         
             flex: 1; 
+            align-self: center; /* 在 flex 容器中水平居中 */
             overflow-y: auto; 
             border: 1px solid #ccc; 
             padding: 20px; 
@@ -38,7 +39,8 @@
             box-sizing: border-box; 
             display: flex; 
             flex-direction: column; 
-            justify-content: flex-end; 
+            justify-content: flex-end;
+            min-height: 0; /* 避免 flex 容器高度異常 */  
         }
         #message { 
             width: 100%; 
@@ -54,6 +56,7 @@
             box-sizing: border-box; 
             background-color: #E6E6FA; 
             text-align: right; 
+            font-family: 'Noto Sans TC', 'Arial', sans-serif; /* 優雅字體 */
         }
         button { 
             width: 80px; 
@@ -114,6 +117,10 @@
         .other { 
             background-color: #ff7f50; 
             color: white; 
+            border-radius: 10px; 
+            word-wrap: break-word; 
+            display: inline-block; 
+            font-size: 16px;
         }
         .short { max-width: 20%; }
         .medium { max-width: 40%; }
@@ -152,11 +159,11 @@
             padding: 10px 5px; 
             background-color: #E6E6FA; 
             border-top: 1px solid #ccc;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
         .option-container {
             text-align: center;
