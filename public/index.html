@@ -125,7 +125,7 @@
         </select>
         <button id="startButton" onclick="startChat()">채팅 시작</button>
     </div>
-    <div class="tip">성별을 선택한 후 '채팅 시작'을 클릭하여 대화 상대를 찾으세요.</div>
+    <div class="tip">성별을 선택한 후 '채팅 시작'을 클릭하여 대화 상대를 찾으세요。</div>
     <div id="status"></div>
     <div class="contact">
         <a href="mailto:vasio54@gmail.com">관리자에게 연락</a>
@@ -133,7 +133,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io(window.location.origin, {
+        const socket = io('/', {
             reconnection: true,
             reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
