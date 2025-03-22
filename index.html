@@ -13,7 +13,7 @@
             justify-content: center; 
             height: 100vh; 
             margin: 0; 
-            background-color: #E6E6FA; /* 淡紫色背景 */
+            background-color: #E6E6FA;
         }
         h1 { 
             margin-bottom: 10px; 
@@ -80,6 +80,28 @@
         .contact a:hover { 
             text-decoration: underline; 
         }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 28px;
+            }
+            .slogan {
+                font-size: 16px;
+            }
+            #gender {
+                width: 100px;
+                margin-right: 10px;
+            }
+            button {
+                padding: 8px 20px;
+                font-size: 14px;
+            }
+            .tip {
+                font-size: 12px;
+            }
+            .contact {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -103,12 +125,17 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io(window.location.origin);
+        const socket = io(window.location.origin, {
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000
+        });
         const statusDiv = document.getElementById('status');
         const genderSelect = document.getElementById('gender');
         const startButton = document.querySelector('button');
-        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0; // 檢測是否為手機
-        let isMatching = false; // 追蹤是否正在配對
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        let isMatching = false;
 
         function startChat() {
             const targetGender = genderSelect.value;
@@ -120,7 +147,7 @@
             socket.emit('startMatching', { targetGender });
             statusDiv.textContent = '正在配對中...';
             startButton.disabled = true;
-            isMatching = true; // 開始配對
+            isMatching = true;
         }
 
         socket.on('waiting', (msg) => {
@@ -130,7 +157,7 @@
         socket.on('matchSuccess', (data) => {
             console.log('配對成功，房間:', data.room);
             sessionStorage.setItem('chatRoom', data.room);
-            isMatching = false; // 配對完成
+            isMatching = false;
             window.location.href = '/chat.html';
         });
 
@@ -138,21 +165,35 @@
             alert(msg);
             statusDiv.textContent = '';
             startButton.disabled = false;
-            isMatching = false; // 錯誤時停止配對
+            isMatching = false;
+            sessionStorage.clear();
         });
 
-        // 手機端檢測頁面可見性
+        socket.on('reconnect', (attemptNumber) => {
+            statusDiv.textContent = '已重新連接到伺服器！';
+            if (!isMatching) {
+                startButton.disabled = false;
+            }
+        });
+
+        socket.on('reconnect_failed', () => {
+            statusDiv.textContent = '無法連接到伺服器，請檢查網路！';
+            startButton.disabled = false;
+            isMatching = false;
+            sessionStorage.clear();
+        });
+
         if (isMobile) {
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden && isMatching) {
-                    // 頁面不可見且正在配對，停止等待並返回首頁
-                    socket.emit('stopMatching'); // 通知後端停止配對
+                    socket.emit('stopMatching');
                     statusDiv.textContent = '已取消配對';
                     startButton.disabled = false;
                     isMatching = false;
+                    sessionStorage.clear();
                     setTimeout(() => {
-                        window.location.href = '/index.html'; // 延遲跳轉以顯示訊息
-                    }, 500);
+                        window.location.href = '/index.html';
+                    }, 1000);
                 }
             });
         }
