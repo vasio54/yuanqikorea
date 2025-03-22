@@ -8,10 +8,16 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] },
   pingTimeout: 60000,
   pingInterval: 25000,
+  path: "/socket.io" // 明確指定 Socket.IO 路徑
 });
 
 // 靜態檔案服務
 app.use(express.static("public"));
+
+// 根路徑，確保可以訪問 index.html
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
+});
 
 const waitingUsers = { male: [], female: [] };
 const roomMessages = {};
@@ -123,10 +129,5 @@ io.on("connection", (socket) => {
   });
 });
 
-// Vercel Serverless 適配
-module.exports = (req, res) => {
-  if (!server.listening) {
-    server.listen(0); // 動態端口
-  }
-  app(req, res);
-};
+// Vercel 無伺服器函數適配
+module.exports = app;

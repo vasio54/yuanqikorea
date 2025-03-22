@@ -241,7 +241,7 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         const targetGender = sessionStorage.getItem('targetGender');
         const chatRoom = sessionStorage.getItem('chatRoom');
@@ -251,7 +251,8 @@
             alert('먼저 대화 상대의 성별을 선택하세요!');
             window.location.href = '/index.html';
         } else {
-            const socket = io('/', {
+            const socket = io({
+                path: '/socket.io', // 與後端路徑一致
                 reconnection: true,
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: 1000,
