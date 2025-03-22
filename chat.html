@@ -23,6 +23,9 @@
             flex-shrink: 0; 
         }
         #chat { 
+            max-width: 700px; /* 設定最大寬度 */
+            width: 100%; /* 確保在小螢幕上仍能適應 */
+            margin: 0 auto 10px auto; /* 上下間距保持原樣，左右自動居中 */         
             flex: 1; 
             overflow-y: auto; 
             border: 1px solid #ccc; 
@@ -140,17 +143,20 @@
             flex-shrink: 0; 
         }
         .input-container {
+            max-width: 700px; /* 與聊天室寬度一致 */
+            width: 100%;
+            margin: 0 auto; /* 居中 */
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 10px 5px; 
             background-color: #E6E6FA; 
             border-top: 1px solid #ccc;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 10; 
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
         }
         .option-container {
             text-align: center;
