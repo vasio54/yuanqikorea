@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緣起 - 選擇聊天對象</title>
+    <title>인연 시작 - 대화 상대 선택</title>
     <style>
         body { 
             font-family: 'Arial', sans-serif; 
@@ -56,7 +56,7 @@
             transform: scale(0.95); 
         }
         #cancelButton {
-            background-color: #f44336; /* 紅色取消按鈕 */
+            background-color: #f44336;
         }
         #cancelButton:hover {
             background-color: #d32f2f;
@@ -87,7 +87,7 @@
             text-decoration: underline; 
         }
         .hidden {
-            display: none; /* 用於隱藏元素 */
+            display: none;
         }
         @media (max-width: 600px) {
             h1 {
@@ -114,22 +114,21 @@
     </style>
 </head>
 <body>
-    <h1>緣起</h1>
-    <div class="slogan">立即開聊，匿名又簡單！</div>
-    <div class="tip">應用可能需要幾秒喚醒，請稍候...</div>
+    <h1>인연 시작</h1>
+    <div class="slogan">지금 채팅 시작, 익명으로 간단하게!</div>
+    <div class="tip">앱이 깨어나는 데 몇 초 걸릴 수 있습니다. 잠시 기다려 주세요...</div>
     <div id="selectionArea">
-        <label for="gender">我想聊天對象的性別</label>
+        <label for="gender">대화 상대의 성별을 선택하세요</label>
         <select id="gender">
-            <option value="">請選擇</option>
-            <option value="female">女</option>
-            <option value="male">男</option>
+            <option value="female">여성</option>
+            <option value="male">남성</option>
         </select>
-        <button id="startButton" onclick="startChat()">開始聊天</button>
+        <button id="startButton" onclick="startChat()">채팅 시작</button>
     </div>
-    <div class="tip">選擇性別後，點擊「開始聊天」以尋找聊天對象。</div>
+    <div class="tip">성별을 선택한 후 '채팅 시작'을 클릭하여 대화 상대를 찾으세요.</div>
     <div id="status"></div>
     <div class="contact">
-        <a href="mailto:vasio54@gmail.com">聯絡站長</a>
+        <a href="mailto:vasio54@gmail.com">관리자에게 연락</a>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -151,23 +150,21 @@
         function startChat() {
             const targetGender = genderSelect.value;
             if (!targetGender) {
-                alert('請選擇要聊天的對象性別！');
+                alert('대화 상대의 성별을 선택하세요!');
                 return;
             }
             sessionStorage.setItem('targetGender', targetGender);
             socket.emit('startMatching', { targetGender });
-            statusDiv.textContent = '正在配對中...';
+            statusDiv.textContent = '매칭 중...';
             startButton.disabled = true;
             isMatching = true;
 
-            // 隱藏選擇區域
             selectionArea.classList.add('hidden');
 
-            // 創建並顯示「取消等待」按鈕
             if (!cancelButton) {
                 cancelButton = document.createElement('button');
                 cancelButton.id = 'cancelButton';
-                cancelButton.textContent = '取消等待';
+                cancelButton.textContent = '대기 취소';
                 cancelButton.onclick = cancelWaiting;
                 document.body.insertBefore(cancelButton, statusDiv);
             }
@@ -176,16 +173,15 @@
 
         function cancelWaiting() {
             socket.emit('stopMatching');
-            statusDiv.textContent = '已取消配對';
+            statusDiv.textContent = '매칭이 취소되었습니다';
             isMatching = false;
             sessionStorage.clear();
 
-            // 隱藏取消按鈕並恢復選擇區域
             cancelButton.classList.add('hidden');
             selectionArea.classList.remove('hidden');
             startButton.disabled = false;
             setTimeout(() => {
-                statusDiv.textContent = ''; // 清空狀態訊息
+                statusDiv.textContent = '';
             }, 1000);
         }
 
@@ -197,7 +193,7 @@
             console.log('配對成功，房間:', data.room);
             sessionStorage.setItem('chatRoom', data.room);
             isMatching = false;
-            if (cancelButton) cancelButton.classList.add('hidden'); // 隱藏取消按鈕
+            if (cancelButton) cancelButton.classList.add('hidden');
             window.location.href = '/chat.html';
         });
 
@@ -212,7 +208,7 @@
         });
 
         socket.on('reconnect', (attemptNumber) => {
-            statusDiv.textContent = '已重新連接到伺服器！';
+            statusDiv.textContent = '서버에 다시 연결되었습니다!';
             if (!isMatching) {
                 startButton.disabled = false;
                 selectionArea.classList.remove('hidden');
@@ -221,7 +217,7 @@
         });
 
         socket.on('reconnect_failed', () => {
-            statusDiv.textContent = '無法連接到伺服器，請檢查網路！';
+            statusDiv.textContent = '서버에 연결할 수 없습니다. 네트워크를 확인하세요!';
             startButton.disabled = false;
             isMatching = false;
             sessionStorage.clear();
@@ -233,7 +229,7 @@
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden && isMatching) {
                     socket.emit('stopMatching');
-                    statusDiv.textContent = '已取消配對';
+                    statusDiv.textContent = '매칭이 취소되었습니다';
                     startButton.disabled = false;
                     isMatching = false;
                     sessionStorage.clear();
